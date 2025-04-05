@@ -18,10 +18,6 @@ Um módulo poderoso e modular para **leitura, criação, formatação e convers�
 
 ## 🚀 Instalação
 
-```bash
-npm install
-```
-
 Requisitos:
 - Node.js v14+
 - Biblioteca `exceljs`
@@ -64,15 +60,15 @@ src/
 
 ```js
 const Excel = require('./src/Excel');
-const excel = new Excel('planilhas');
+const E = new Excel('planilhas');
 
 (async () => {
   // Converter planilha para JSON
-  const resultado = await excel.toJson('exemplo.xlsx', 'Dados');
+  const resultado = await E.toJson('exemplo.xlsx', 'Dados');
   console.log(resultado.data);
 
   // Criar nova planilha
-  await excel.create('Relatório', ['Nome', 'Idade'], [
+  await E.create('Relatório', ['Nome', 'Idade'], [
     { Nome: 'João', Idade: 30 },
     { Nome: 'Maria', Idade: 25 }
   ]);
@@ -98,4 +94,3 @@ Este projeto é livre para uso e modificação interna. Adapte conforme necessá
 
 ---
 
-Feito com 💻 por [Seu Nome ou Equipe].
