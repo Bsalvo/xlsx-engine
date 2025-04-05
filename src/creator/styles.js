@@ -12,8 +12,14 @@ const PRE_CELL_STYLES = {
     fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEB9C' } },
     font: { color: { argb: '9C6500' } },
   },
+  SoftNeutro: {
+    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFCC' } },
+  },
   Centralizado: {
     alignment: { horizontal: 'center' },
+  },
+  Direita: {
+    alignment: { horizontal: 'right' },
   },
 };
 
@@ -27,15 +33,12 @@ const PRE_CELL_STYLES = {
  *   - Pode ser um objeto com propriedades de estilo personalizadas.
  *
  * @example
- * // Aplicar um único estilo predefinido:
  * applyCellStyle(cell, 'Bom');
  *
  * @example
- * // Aplicar múltiplos estilos predefinidos:
  * applyCellStyle(cell, ['Atenção', 'Centralizado']);
  *
  * @example
- * // Aplicar um estilo personalizado:
  * applyCellStyle(cell, { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0000' } } });
  *
  * @throws {Error} Caso um estilo não seja encontrado ou seja inválido.

@@ -1,10 +1,7 @@
 const ExcelJS = require('exceljs');
-const fs = require('fs');
-const readline = require('readline');
-const { readDirectory } = require('../utils/directory');
-const { formatTextToIdentifier, excelToJson } = require('./controller');
+
+const { formatTextToIdentifier } = require('../parser/transformer');
 const { applyCellStyle } = require('./styles');
-const { updateJsonFile } = require('../utils/json');
 
 /**
  * Cria e retorna uma nova instância de um workbook Excel.
@@ -189,7 +186,18 @@ async function createExcelXlsx(
     }
 
     await saveXlsxFile(workbook, directory);
-    console.log('Planilha criada com sucesso!');
+
+    const dataAtual = new Date();
+    const dia = dataAtual.getDate();
+    const mes = dataAtual.getMonth() + 1; // Mês começa em 0
+    const ano = dataAtual.getFullYear();
+    const horas = dataAtual.getHours();
+    const minutos = dataAtual.getMinutes();
+    const segundos = dataAtual.getSeconds();
+
+    console.log(
+      `Planilha criada com sucesso! - ${dia}/${mes}/${ano} às ${horas}:${minutos}:${segundos}`
+    );
   } catch (error) {
     console.error('Impossível criar planilha: ', error);
   }
@@ -213,7 +221,11 @@ function configureSheet(worksheet, columns, rows, config) {
           header: column.value,
           key: column.key || formatTextToIdentifier(column.value),
           width: column.width,
-          style: Array.isArray(column.style) ? column.style : (typeof column.style === 'string' ? [column.style] : []),
+          style: Array.isArray(column.style)
+            ? column.style
+            : typeof column.style === 'string'
+            ? [column.style]
+            : [],
         }
   );
 
@@ -232,7 +244,9 @@ function configureSheet(worksheet, columns, rows, config) {
 
         if (matchedValue && typeof matchedValue === 'object') {
           if (matchedValue.style) {
-            const cellStyle = Array.isArray(matchedValue.style) ? matchedValue.style : [matchedValue.style];
+            const cellStyle = Array.isArray(matchedValue.style)
+              ? matchedValue.style
+              : [matchedValue.style];
             const combinedStyle = [...columnStyle, ...cellStyle];
             applyCellStyle(cell, combinedStyle);
           } else if (columnStyle.length) {
@@ -257,7 +271,6 @@ function configureSheet(worksheet, columns, rows, config) {
     adjustColumnWidths(worksheet, columns);
   }
 }
-
 
 /**
  * Ajusta automaticamente a largura das colunas em uma planilha Excel.
@@ -298,92 +311,6 @@ function adjustColumnWidths(worksheet, columns) {
 }
 
 /**
- * Converte um arquivo CSV em um arquivo XLSX.
- *
- * @param {string} csvFilePath - Caminho para o arquivo CSV de entrada.
- * @param {string} xlsxFilePath - Caminho para salvar o arquivo XLSX gerado.
- * @param {string} [aba='Planilha1'] - Nome da aba da planilha dentro do arquivo XLSX (padrão: 'Planilha1').
- * @returns {Promise<void>} - Retorna uma Promise que é resolvida quando o arquivo XLSX é salvo.
- */
-async function csvToXlsx(csvFilePath, xlsxFilePath, aba = 'Planilha1') {
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet(aba);
-
-  const fileStream = fs.createReadStream(csvFilePath, { encoding: 'utf-8' });
-  const rl = readline.createInterface({
-    input: fileStream,
-    crlfDelay: Infinity,
-  });
-
-  for await (const line of rl) {
-    const cleanedLine = line.trim(); // Remove espaços em branco extras
-    const row = cleanedLine.split(/;|,/); // Divide usando ';' ou ','
-    worksheet.addRow(row);
-  }
-
-  await workbook.xlsx.writeFile(xlsxFilePath);
-  console.log(`Arquivo XLSX salvo em: ${xlsxFilePath}`);
-}
-
-/**
- * Unifica arquivos xlsx de uma mesma estrutura de dados
- *
- * @param {*} pasta O caminho onde se encontram os arquivos
- * @param {*} csv Se os arquivos estão em csv
- * @param {*} planilhas Específica arquivos específicos na pasta se necessário
- * @param {*} toExcel Se não for falso deve conter o caminho do novo arquivo excel a ser criado
- * @param {*} toJson Se não for falso deve conter o caminho do novo arquivo json a ser criado
- * @param {*} returnJson Retorna o JSON que foi criado a partir do processo
- */
-async function unificarXlsx(
-  pasta,
-  csv = false,
-  planilhas = null,
-  toExcel = false,
-  toJson = false,
-  returnJson = true
-) {
-  let json = [];
-  let header = null;
-  let files = await readDirectory(pasta);
-
-  for (let file of files) {
-    let file_name = file.split('.')[0];
-    if (csv) {
-      await csvToXlsx(
-        `${pasta}/${file}`,
-        `${pasta}/${file_name}.xlsx`,
-        file_name
-      );
-    }
-    let json_file = await excelToJson(
-      `${pasta}/${file_name}.xlsx`,
-      2,
-      file_name,
-      1,
-      [],
-      { header: true }
-    );
-    console.log(`${file} lido.`);
-    header = json_file.header;
-    json = [...json, ...json_file.data];
-  }
-
-  if (toJson) {
-    await updateJsonFile(toJson, json);
-    if (returnJson) {
-      return json;
-    }
-  }
-
-  if (toExcel) {
-    await createExcelXlsx('Unificados', header, json, toExcel, {
-      header: { fixed: true, font: 'bold' },
-    });
-  }
-}
-
-/**
  * Habilita filtros automáticos nas colunas de uma planilha Excel.
  *
  * @param {Object} worksheet - Instância de `ExcelJS.Worksheet` onde os filtros serão aplicados.
@@ -401,12 +328,11 @@ function enableColumnFilters(worksheet, columns, row = 1) {
   }
 }
 
+
 module.exports = {
   setExcelWorkbook,
   setHeaderRow,
   setWorksheet,
   saveXlsxFile,
   createExcelXlsx,
-  csvToXlsx,
-  unificarXlsx,
 };

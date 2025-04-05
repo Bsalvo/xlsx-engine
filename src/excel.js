@@ -1,8 +1,11 @@
 const os = require('os');
 const path = require('path');
-const fs = require('fs');
-const { excelToJson } = require('../controller');
-const { createExcelXlsx, csvToXlsx } = require('../creator');
+const { createExcelXlsx } = require('./creator/creator');
+const { createExcelCsv } = require('./creator/csvCreator');
+const { excelToJson } = require('./parser/extractor');
+const { csvToXlsx } = require('./parser/reader');
+const { formatTextToIdentifier } = require('./parser/transformer');
+const { setDirectory } = require('./utils/pathUtils');
 
 class Excel {
   /** Indica qual o diretório onde os arquivos manipulados irão ser inseridos ou acessados */
@@ -43,7 +46,7 @@ class Excel {
     necessaryColumns = []
   ) {
     let json = await excelToJson(
-      this.setDirectory(fileExcel),
+      setDirectory(fileExcel, this.pastaProjeto),
       initRow,
       sheetName,
       headerIndex,
@@ -81,7 +84,7 @@ class Excel {
       config = this.headerPredefinitions[config] ?? {};
     }
 
-    directory = this.setDirectory(directory, false);
+    directory = setDirectory(directory, false);
     if (Array.isArray(sheetConfigOrName)) {
       await createExcelXlsx(sheetConfigOrName, directory, config);
     } else {
@@ -114,7 +117,7 @@ class Excel {
         xlsxFilePath = `${path.parse(csvFilePath).name}.xlsx`;
       }
 
-      await csvToXlsx(this.setDirectory(csvFilePath), this.setDirectory(xlsxFilePath), aba);
+      await csvToXlsx(setDirectory(csvFilePath), setDirectory(xlsxFilePath), aba);
 
     } catch (error) {
       throw error;
@@ -122,28 +125,14 @@ class Excel {
 
   }
 
-  /**
-   * Define o diretório a partir da pasta do projeto se necessário
-   *
-   * @param {bool} isReadingMode Se o diretório está sendo acessado para leitura ou escrita
-   */
-  setDirectory(directory, isReadingMode = true) {
-    if (directory && !path.isAbsolute(directory)) {
-      directory = path.join(this.pastaProjeto, directory);
-    } else if (!directory) {
-      if (!isReadingMode) {
-        const timestamp = Date.now();
-        directory = path.join(this.pastaProjeto, `temp_${timestamp}.xlsx`);
-      }
-    }
-
-    // Cria o diretório se não existir
-    const dirPath = path.dirname(directory);
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true });
-    }
-    return directory;
+  toIdentifier(value){
+    return formatTextToIdentifier(value);
   }
+
+  async createExcelCsv(filePath, columns, rows){
+    createExcelCsv(filePath, columns, rows);
+  }
+
 }
 
 module.exports = Excel;
