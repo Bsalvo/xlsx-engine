@@ -1,5 +1,6 @@
 # Ignora dependências
 node_modules/
+teste/
 # Ignora arquivos de log
 *.log
 # Ignora arquivos temporários do sistema
