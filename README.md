@@ -23,10 +23,8 @@ Requisitos:
 - Biblioteca `exceljs`
 - Biblioteca `unidecode` (para identificadores)
 
-Instale as dependências:
-
 ```bash
-npm install exceljs unidecode
+npm install git+https://github.com/Bsalvo/xlsx-engine.git
 ```
 
 ---
