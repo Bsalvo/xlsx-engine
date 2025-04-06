@@ -1,4 +1,11 @@
 {
+  "name": "xlsx-engine",
+  "version": "1.0.0",
+  "description": "Módulo para leitura, criação e conversão de planilhas Excel e CSV com Node.js",
+  "main": "src/Excel.js",
+  "keywords": ["excel", "xlsx", "csv", "node", "exceljs", "planilha"],
+  "author": "Bsalvo",
+  "license": "MIT",
   "dependencies": {
     "exceljs": "^4.4.0",
     "unidecode": "^1.1.0"

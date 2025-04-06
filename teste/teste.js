@@ -1,4 +1,4 @@
-const Excel = require('../src/excel');
+const Excel = require('../src/Excel');
 const E = new Excel('C:/Users/bruno/Downloads');
 
 async function teste(){
