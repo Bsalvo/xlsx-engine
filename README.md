@@ -69,12 +69,13 @@ const E = new Excel('planilhas');
 
   // Criar nova planilha
   await E.create('Relatório', ['Nome', 'Idade'], [
-    { Nome: 'João', Idade: 30 },
-    { Nome: 'Maria', Idade: 25 }
+    { nome: 'João', idade: 30 },
+    { nome: 'Maria', idade: 25 },
+    { nome: 'Camila', idade: 65, style: 'Bom' },
   ]);
 
   // Converter CSV para XLSX
-  await excel.toXlsx('usuarios.csv');
+  await E.toXlsx('usuarios.csv');
 })();
 ```
 
