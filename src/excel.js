@@ -84,7 +84,7 @@ class Excel {
       config = this.headerPredefinitions[config] ?? {};
     }
 
-    directory = setDirectory(directory, false);
+    directory = setDirectory(directory, this.pastaProjeto, false);
     if (Array.isArray(sheetConfigOrName)) {
       await createExcelXlsx(sheetConfigOrName, directory, config);
     } else {
