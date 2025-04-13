@@ -104,10 +104,59 @@ async function csvToXlsx(csvFilePath, xlsxFilePath, aba = 'Planilha1') {
     console.log(`Arquivo XLSX salvo em: ${xlsxFilePath}`);
 }
 
+/**
+ * Converte um CSV em JSON limpo e padronizado.
+ *
+ * @param {string} csvFilePath - Caminho do CSV de entrada.
+ * @returns {Promise<Object[]>} - Array de objetos limpos.
+ */
+async function csvToJson(csvFilePath) {
+    const fileStream = fs.createReadStream(csvFilePath, { encoding: 'utf-8' });
+    const rl = readline.createInterface({
+        input: fileStream,
+        crlfDelay: Infinity,
+    });
+
+    let headers = [];
+    const jsonData = [];
+
+    for await (const line of rl) {
+        const cleanedLine = line.trim();
+        if (!cleanedLine) continue;
+
+        const delimiter = cleanedLine.includes(';') ? ';' : ',';
+        const row = cleanedLine.split(delimiter).map(v =>
+            v.replace(/^"+|"+$/g, '').trim() || null
+        );
+
+        if (headers.length === 0) {
+            headers = row.map(header =>
+                header
+                    .replace(/^"+|"+$/g, '')
+                    .trim()
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^\w]+/g, '_')
+                    .replace(/^_+|_+$/g, '')
+            );
+        } else {
+            const obj = {};
+            headers.forEach((key, idx) => {
+                obj[key] = row[idx];
+            });
+            jsonData.push(obj);
+        }
+    }
+
+    return jsonData;
+}
+
 
 module.exports = {
     getExcelWorkbook,
     getWorksheet,
     getHeaderRow,
     csvToXlsx,
+    csvToJson
 };
