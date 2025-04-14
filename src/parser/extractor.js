@@ -14,6 +14,8 @@ const { formatTextToIdentifier } = require('./transformer');
  * @param {Object} config - Objeto de configuração para retorno de dados
  * @returns {Array<Object>} - Um array de objetos JSON formatados.
  * @throws {Error} - Lança um erro se os parâmetros fornecidos não forem válidos.
+ * 
+ * TODO: Construír um tratamento de erros adequado
  */
 async function excelToJson(fileExcel, initRow, sheetIndex = 1, headerIndex = 1, necessaryColumns, config = null) {
 
