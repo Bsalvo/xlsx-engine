@@ -141,7 +141,7 @@ async function saveXlsxFile(workbook, directory) {
   } catch (error) {
     throw new Error(
       'Não foi possível salvar a planilha no diretório informado: ' +
-        error.message
+      error.message
     );
   }
 }
@@ -177,12 +177,12 @@ async function createExcelXlsx(
 
       sheetConfigs.forEach(({ sheetName, columns, rows }) => {
         const worksheet = workbook.addWorksheet(sheetName);
-        configureSheet(worksheet, columns, rows, config);
+        configureSheet(worksheet, columns, rows, config, workbook);
       });
     } else {
       // Modo de uma única aba
       const worksheet = await setWorksheet(workbook, sheetConfigOrName);
-      configureSheet(worksheet, columns, rows, config);
+      configureSheet(worksheet, columns, rows, config, workbook);
     }
 
     await saveXlsxFile(workbook, directory);
@@ -213,55 +213,94 @@ async function createExcelXlsx(
  *   - `header`: Estilos ou configurações específicas para o cabeçalho.
  *   - `ajustColumn`: Define se as larguras das colunas devem ser ajustadas automaticamente (padrão: true).
  */
-function configureSheet(worksheet, columns, rows, config) {
+function configureSheet(worksheet, columns, rows, config, workbook) {
   const preparedColumns = columns.map((column) =>
     typeof column === 'string'
       ? { header: column, key: formatTextToIdentifier(column) }
       : {
-          header: column.value,
-          key: column.key || formatTextToIdentifier(column.value),
-          width: column.width,
-          style: Array.isArray(column.style)
-            ? column.style
-            : typeof column.style === 'string'
+        header: column.value,
+        key: column.key || formatTextToIdentifier(column.value),
+        width: column.width,
+        style: Array.isArray(column.style)
+          ? column.style
+          : typeof column.style === 'string'
             ? [column.style]
             : [],
-        }
+        validation: column.validation || null,
+      }
   );
 
   const columnKeys = preparedColumns.map((col) => col.key);
-
   setHeaderRow(worksheet, columns, config?.header || {});
 
-  // Preenchimento de dados
+  // Cria a aba oculta se necessário
+  const abaOculta = workbook.getWorksheet('ListaDados') || workbook.addWorksheet('ListaDados');
+  abaOculta.state = 'veryHidden';
+
+  const listaMapeada = new Map(); // Evita duplicar listas
+
   if (rows && rows.length) {
     rows.forEach((rowData) => {
       const row = worksheet.addRow();
       columnKeys.forEach((colKey, index) => {
         const cell = row.getCell(index + 1);
         const matchedValue = rowData[colKey];
-        const columnStyle = preparedColumns[index].style || []; // Obter estilo da coluna
+        const columnConfig = preparedColumns[index];
+        const columnStyle = columnConfig.style || [];
 
-        if (matchedValue && typeof matchedValue === 'object') {
+        let valorFinal = matchedValue;
+        let cellValidation = null;
+
+        if (matchedValue && typeof matchedValue === 'object' && 'value' in matchedValue) {
+          valorFinal = matchedValue.value;
           if (matchedValue.style) {
-            const cellStyle = Array.isArray(matchedValue.style)
-              ? matchedValue.style
-              : [matchedValue.style];
-            const combinedStyle = [...columnStyle, ...cellStyle];
-            applyCellStyle(cell, combinedStyle);
+            const styles = Array.isArray(matchedValue.style) ? matchedValue.style : [matchedValue.style];
+            applyCellStyle(cell, [...columnStyle, ...styles]);
           } else if (columnStyle.length) {
-            applyCellStyle(cell, columnStyle); // Aplica apenas estilos da coluna
+            applyCellStyle(cell, columnStyle);
           }
           if (matchedValue.note) {
             cell.note = { texts: [{ text: matchedValue.note }] };
           }
-          cell.value = matchedValue.value;
+          cellValidation = matchedValue.validation;
         } else {
-          if (columnStyle.length) {
-            applyCellStyle(cell, columnStyle); // Aplica estilos da coluna se não houver configuração específica
-          }
-          cell.value = matchedValue || null;
+          if (columnStyle.length) applyCellStyle(cell, columnStyle);
         }
+
+        // Aplica validação de coluna
+        if (!cellValidation && columnConfig.validation) {
+          const val = columnConfig.validation;
+          if (val.select && Array.isArray(val.values)) {
+            const chave = val.values.join('|');
+            let linhaInicio;
+
+            if (listaMapeada.has(chave)) {
+              linhaInicio = listaMapeada.get(chave);
+            } else {
+              linhaInicio = abaOculta.rowCount + 1;
+              val.values.forEach((v, i) => abaOculta.getCell(`A${linhaInicio + i}`).value = v);
+              listaMapeada.set(chave, linhaInicio);
+            }
+
+            const linhaFim = linhaInicio + val.values.length - 1;
+            cellValidation = {
+              type: 'list',
+              formulae: [`=ListaDados!$A$${linhaInicio}:$A$${linhaFim}`],
+              allowBlank: true,
+              showErrorMessage: true,
+              errorTitle: 'Entrada inválida',
+              error: 'Escolha um valor da lista suspensa.'
+            };
+          } else {
+            cellValidation = columnConfig.validation;
+          }
+        }
+
+        if (cellValidation) {
+          cell.dataValidation = cellValidation;
+        }
+
+        cell.value = valorFinal || null;
       });
     });
   }
