@@ -84,6 +84,10 @@ function setHeaderRow(worksheet, columns, config = {}) {
   preparedColumns.forEach((column, index) => {
     const cell = worksheet.getRow(config.headerRow || 1).getCell(index + 1);
 
+    // if (columns[index]?.editable === true) {
+    //   cell.protection = { locked: false };
+    // }
+
     // Estilo global
     if (config.style) {
       if (config.style.font) {
@@ -169,7 +173,8 @@ async function createExcelXlsx(
   columns,
   rows,
   directory,
-  config = {}
+  config = {},
+  protection
 ) {
   try {
     const workbook = await setExcelWorkbook();
@@ -183,12 +188,12 @@ async function createExcelXlsx(
 
       sheetConfigs.forEach(({ sheetName, columns, rows }) => {
         const worksheet = workbook.addWorksheet(sheetName);
-        configureSheet(worksheet, columns, rows, config, workbook);
+        configureSheet(worksheet, columns, rows, config, workbook, protection);
       });
     } else {
       // Modo de uma única aba
       const worksheet = await setWorksheet(workbook, sheetConfigOrName);
-      configureSheet(worksheet, columns, rows, config, workbook);
+      configureSheet(worksheet, columns, rows, config, workbook, protection);
     }
 
     await saveXlsxFile(workbook, directory);
@@ -219,7 +224,7 @@ async function createExcelXlsx(
  *   - `header`: Estilos ou configurações específicas para o cabeçalho.
  *   - `ajustColumn`: Define se as larguras das colunas devem ser ajustadas automaticamente (padrão: true).
  */
-function configureSheet(worksheet, columns, rows, config, workbook) {
+function configureSheet(worksheet, columns, rows, config, workbook, protection) {
   const preparedColumns = columns.map((column) =>
     typeof column === 'string'
       ? { header: column, key: formatTextToIdentifier(column) }
@@ -233,6 +238,7 @@ function configureSheet(worksheet, columns, rows, config, workbook) {
             ? [column.style]
             : [],
         validation: column.validation || null,
+        editable: column.editable || false,
       }
   );
 
@@ -314,6 +320,16 @@ function configureSheet(worksheet, columns, rows, config, workbook) {
         }
 
         cell.value = valorFinal || null;
+
+        // Aplica proteção se for célula desbloqueada pela coluna
+        if (columnConfig.editable === true) {
+          cell.protection = { locked: false };
+        }
+
+        if (matchedValue && typeof matchedValue === 'object' && matchedValue.protection) {
+          cell.protection = matchedValue.protection;
+        }
+
       });
     });
   }
@@ -321,6 +337,14 @@ function configureSheet(worksheet, columns, rows, config, workbook) {
   // Ajusta larguras, passando as colunas originais como referência
   if (!config || config.ajustColumn !== false) {
     adjustColumnWidths(worksheet, columns);
+  }
+
+  if (protection?.enabled && typeof worksheet.protect === 'function') {
+    worksheet.protect(protection.password, {
+      selectLockedCells: true,
+      selectUnlockedCells: true,
+      autoFilter: true
+    });
   }
 }
 

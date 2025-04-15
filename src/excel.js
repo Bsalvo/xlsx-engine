@@ -29,6 +29,11 @@ class Excel {
         global: { style: { font: { name: this.document_font, size: this.document_size } } },
       },
     };
+
+    this.protection = {
+      enabled: config?.protection?.enabled ?? false,
+      password: config?.protection?.password ?? '',
+    };
   }
 
 
@@ -92,14 +97,15 @@ class Excel {
 
     directory = setDirectory(directory, this.pastaProjeto, false);
     if (Array.isArray(sheetConfigOrName)) {
-      await createExcelXlsx(sheetConfigOrName, directory, config);
+      await createExcelXlsx(sheetConfigOrName, directory, config, this.protection);
     } else {
       await createExcelXlsx(
         sheetConfigOrName,
         columns,
         rows,
         directory,
-        config
+        config,
+        this.protection
       );
     }
   }

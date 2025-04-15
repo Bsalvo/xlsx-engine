@@ -1,5 +1,5 @@
 const Excel = require('../src/Excel');
-const E = new Excel('C:/Users/bruno/Downloads');
+const E = new Excel('C:/Users/bruno/Downloads', { protection: { enabled: true, password: 'segredo123' } });
 
 async function teste() {
 
@@ -14,6 +14,7 @@ async function teste() {
                     select: true,
                     values: ['Ativo', 'Inativo', 'Pendente'],
                 },
+                editable: true,
             },
             {
                 value: 'Coragem',
@@ -22,10 +23,11 @@ async function teste() {
                     select: true,
                     values: ['Cão', 'Covarde'],
                 },
+                editable: true,
             },
         ],
         [
-            { nome: 'Bruno', status: 'Ativo' },
+            { nome: 'Bruno' },
             { nome: 'Maria', coragem: 'Covarde' },
         ],
     );
