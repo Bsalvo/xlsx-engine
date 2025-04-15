@@ -234,7 +234,7 @@ function configureSheet(worksheet, columns, rows, config, workbook) {
   setHeaderRow(worksheet, columns, config?.header || {});
 
   // Cria a aba oculta se necessário
-  const abaOculta = workbook.getWorksheet('ListaDados') || workbook.addWorksheet('ListaDados');
+  const abaOculta = workbook.getWorksheet('HiddenSelect') || workbook.addWorksheet('HiddenSelect');
   abaOculta.state = 'veryHidden';
 
   const listaMapeada = new Map(); // Evita duplicar listas
@@ -285,7 +285,7 @@ function configureSheet(worksheet, columns, rows, config, workbook) {
             const linhaFim = linhaInicio + val.values.length - 1;
             cellValidation = {
               type: 'list',
-              formulae: [`=ListaDados!$A$${linhaInicio}:$A$${linhaFim}`],
+              formulae: [`=HiddenSelect!$A$${linhaInicio}:$A$${linhaFim}`],
               allowBlank: true,
               showErrorMessage: true,
               errorTitle: 'Entrada inválida',
