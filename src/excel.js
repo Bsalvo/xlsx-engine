@@ -11,21 +11,27 @@ class Excel {
   /** Indica qual o diretório onde os arquivos manipulados irão ser inseridos ou acessados */
   pastaProjeto;
 
-  constructor(pastaProjeto) {
+  constructor(pastaProjeto, config = {}) {
     this.pastaProjeto = pastaProjeto ?? null;
     if (this.pastaProjeto) {
       this.pastaProjeto = path.isAbsolute(this.pastaProjeto)
         ? this.pastaProjeto
         : path.join(os.homedir(), this.pastaProjeto);
     }
+
+    this.document_font = config?.document?.font ?? 'Aptos Narrow';
+    this.document_size = config?.document?.size ?? 9;
+
+    /** Pré-definições de estilos de cabeçalhos para a criação de planilha */
+    this.documentPredefinitions = {
+      default: {
+        header: { fixed: true, style: { font: { name: this.document_font, size: this.document_size, bold: true }, alignment: 'center' } },
+        global: { style: { font: { name: this.document_font, size: this.document_size } } },
+      },
+    };
   }
 
-  /** Pré-definições de estilos de cabeçalhos para a criação de planilha */
-  headerPredefinitions = {
-    default: {
-      header: { fixed: true, style: { font: 'bold', alignment: 'center' } },
-    },
-  };
+
 
   /**
    * Converte uma planilha do Excel em um array de objetos JSON formatados.
@@ -81,7 +87,7 @@ class Excel {
   ) {
 
     if (typeof config === 'string') {
-      config = this.headerPredefinitions[config] ?? {};
+      config = this.documentPredefinitions[config] ?? {};
     }
 
     directory = setDirectory(directory, this.pastaProjeto, false);
@@ -109,11 +115,11 @@ class Excel {
   async toXlsx(csvFilePath, xlsxFilePath = null, aba) {
 
     try {
-      if(!csvFilePath){
+      if (!csvFilePath) {
         throw new Error('Caminho do arquivo Excel (.csv) inválido fornecido.');
       }
 
-      if(!xlsxFilePath){
+      if (!xlsxFilePath) {
         xlsxFilePath = `${path.parse(csvFilePath).name}.xlsx`;
       }
 
@@ -125,11 +131,11 @@ class Excel {
 
   }
 
-  toIdentifier(value){
+  toIdentifier(value) {
     return formatTextToIdentifier(value);
   }
 
-  async createExcelCsv(filePath, columns, rows){
+  async createExcelCsv(filePath, columns, rows) {
     createExcelCsv(filePath, columns, rows);
   }
 

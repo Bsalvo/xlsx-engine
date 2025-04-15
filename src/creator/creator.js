@@ -87,7 +87,11 @@ function setHeaderRow(worksheet, columns, config = {}) {
     // Estilo global
     if (config.style) {
       if (config.style.font) {
-        cell.font = { ...cell.font, bold: config.style.font === 'bold' };
+        if (typeof config.style.font === 'string' && config.style.font === 'bold') {
+          cell.font = { ...cell.font, bold: true };
+        } else if (typeof config.style.font === 'object') {
+          cell.font = { ...cell.font, ...config.style.font };
+        }
       }
       if (config.style.alignment) {
         cell.alignment = {
@@ -157,6 +161,8 @@ async function saveXlsxFile(workbook, directory) {
  * @param {Object} config - Configurações opcionais de estilo ou propriedades para cada aba (default: {}).
  *
  * @returns {Promise<void>} Retorna uma promessa que cria e salva o arquivo Excel.
+ * 
+ * TODO: Melhorar mensagens de erro e adicionar validações mais robustas.
  */
 async function createExcelXlsx(
   sheetConfigOrName,
@@ -251,8 +257,14 @@ function configureSheet(worksheet, columns, rows, config, workbook) {
         let valorFinal = matchedValue;
         let cellValidation = null;
 
+
+        if (config?.global?.style) {
+          applyCellStyle(cell, config.global.style); // aplica estilo global primeiro
+        }
+
         if (matchedValue && typeof matchedValue === 'object' && 'value' in matchedValue) {
           valorFinal = matchedValue.value;
+
           if (matchedValue.style) {
             const styles = Array.isArray(matchedValue.style) ? matchedValue.style : [matchedValue.style];
             applyCellStyle(cell, [...columnStyle, ...styles]);
@@ -265,6 +277,7 @@ function configureSheet(worksheet, columns, rows, config, workbook) {
           cellValidation = matchedValue.validation;
         } else {
           if (columnStyle.length) applyCellStyle(cell, columnStyle);
+
         }
 
         // Aplica validação de coluna
