@@ -1,4 +1,5 @@
 const ExcelJS = require('exceljs');
+const path = require('path');
 
 const { formatTextToIdentifier } = require('../parser/transformer');
 const { applyCellStyle } = require('./styles');
@@ -199,18 +200,23 @@ async function createExcelXlsx(
     await saveXlsxFile(workbook, directory);
 
     const dataAtual = new Date();
-    const dia = dataAtual.getDate();
-    const mes = dataAtual.getMonth() + 1; // Mês começa em 0
+    const dia = String(dataAtual.getDate()).padStart(2, '0');
+    const mes = String(dataAtual.getMonth() + 1).padStart(2, '0'); // Mês começa em 0
     const ano = dataAtual.getFullYear();
-    const horas = dataAtual.getHours();
-    const minutos = dataAtual.getMinutes();
-    const segundos = dataAtual.getSeconds();
+    const horas = String(dataAtual.getHours()).padStart(2, '0');
+    const minutos = String(dataAtual.getMinutes()).padStart(2, '0');
+    const segundos = String(dataAtual.getSeconds()).padStart(2, '0');
+
+    const nomeArquivo = path.basename(directory);
+    const soDiretorio = path.dirname(directory);
 
     console.log(
-      `Planilha criada com sucesso! - ${dia}/${mes}/${ano} às ${horas}:${minutos}:${segundos}`
+      `[✓] Planilha ${nomeArquivo} criada com sucesso! - ${dia}/${mes}/${ano} às ${horas}:${minutos}:${segundos}`
     );
+    console.log(`[>] Salva em: ${soDiretorio}`);
+
   } catch (error) {
-    console.error('Impossível criar planilha: ', error);
+    console.error('[X] Impossível criar planilha: ', error);
   }
 }
 

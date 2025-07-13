@@ -14,9 +14,22 @@ class Excel {
   constructor(pastaProjeto, config = {}) {
     this.pastaProjeto = pastaProjeto ?? null;
     if (this.pastaProjeto) {
-      this.pastaProjeto = path.isAbsolute(this.pastaProjeto)
-        ? this.pastaProjeto
-        : path.join(os.homedir(), this.pastaProjeto);
+      // Mapeia caminhos especiais
+      const especiais = {
+        '/Downloads': path.join(os.homedir(), 'Downloads'),
+        '/Documents': path.join(os.homedir(), 'Documents'),
+        '/Desktop': path.join(os.homedir(), 'Desktop')
+      };
+
+      // Verifica se é um caminho especial
+      if (especiais[this.pastaProjeto]) {
+        this.pastaProjeto = especiais[this.pastaProjeto];
+      } else {
+        // Resolve caminho normalmente
+        this.pastaProjeto = path.isAbsolute(this.pastaProjeto)
+          ? this.pastaProjeto
+          : path.join(os.homedir(), this.pastaProjeto);
+      }
     }
 
     this.document_font = config?.document?.font ?? 'Aptos Narrow';

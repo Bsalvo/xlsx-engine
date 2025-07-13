@@ -1,5 +1,5 @@
 const Excel = require('../src/Excel');
-const E = new Excel('C:/Users/bruno/Downloads', { protection: { enabled: true, password: 'segredo123' } });
+const E = new Excel('/Downloads', { protection: { enabled: true, password: 'segredo123' } });
 
 async function teste() {
 

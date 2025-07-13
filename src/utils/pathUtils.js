@@ -9,7 +9,6 @@ const fs = require('fs');
 function setDirectory(directory, pastaProjeto, isReadingMode = true) {
     if (directory && !path.isAbsolute(directory)) {
         directory = path.join(pastaProjeto, directory);
-        console.log('aqui', directory);
     } else if (!directory) {
         if (!isReadingMode) {
             const timestamp = Date.now();
